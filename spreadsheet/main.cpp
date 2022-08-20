@@ -1,6 +1,6 @@
 #include "common.h"
 #include "formula.h"
-#include "test_runner.h"
+#include "test_runner_p.h"
 
 inline std::ostream& operator<<(std::ostream& output, Position pos) {
     return output << "(" << pos.row << ", " << pos.col << ")";
