@@ -61,7 +61,7 @@ void Sheet::ClearCell(Position pos) {
         throw InvalidPositionException("Cell position is not valid");
     }
     if (pos_cell_.count(pos) > 0) {
-        pos_cell_.at(pos)->Set("");
+        pos_cell_.erase(pos);
     }
     occupied_cells_.erase(pos);
 
