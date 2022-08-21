@@ -10,6 +10,7 @@
 #include <optional>
 #include <sstream>
 #include <algorithm>
+#include <string>
 
 namespace ASTImpl {
 
@@ -265,12 +266,53 @@ namespace ASTImpl {
                             return 0;
                         }
                         else {
-                            if (std::any_of(temp.begin(), temp.end(), [](char c) {return !std::isdigit(c); })) {
-                            throw FormulaError(FormulaError::Category::Value);
-                            } 
-                            return std::stod(temp);
+                            size_t it = temp.find_first_not_of(' ');
+                            if (it != std::string::npos) {
+                                temp = temp.substr(it);
+                            }
+                            if (temp[0] == '-') {
+                                temp = temp.substr(1);
+                                size_t delim = temp.find_first_of('.');
+                                if (delim != std::string::npos) {
+                                    std::string temp1 = temp.substr(0, delim);
+                                    std::string temp2 = temp.substr(delim + 1);
+                                    if (std::any_of(temp1.begin(), temp1.end(), [](char c) {return !std::isdigit(c); })) {
+                                        throw FormulaError(FormulaError::Category::Value);
+                                    }
+                                    if (std::any_of(temp2.begin(), temp2.end(), [](char c) {return !std::isdigit(c); })) {
+                                        throw FormulaError(FormulaError::Category::Value);
+                                    }
+                                    return (- 1.0 * (std::stod(temp)));
+                                }
+                                else {
+                                    if (std::any_of(temp.begin(), temp.end(), [](char c) {return !std::isdigit(c); })) {
+                                        throw FormulaError(FormulaError::Category::Value);
+                                    }
+                                    return (-1.0 * (std::stod(temp)));
+                                }
+                            }
+                            else {
+                                size_t delim = temp.find_first_of('.');
+                                if (delim != std::string::npos) {
+                                    std::string temp1 = temp.substr(0, delim);
+                                    std::string temp2 = temp.substr(delim + 1);
+                                    if (std::any_of(temp1.begin(), temp1.end(), [](char c) {return !std::isdigit(c); })) {
+                                        throw FormulaError(FormulaError::Category::Value);
+                                    }
+                                    if (std::any_of(temp2.begin(), temp2.end(), [](char c) {return !std::isdigit(c); })) {
+                                        throw FormulaError(FormulaError::Category::Value);
+                                    }
+                                    return std::stod(temp);
+                                }
+                                else {
+                                    if (std::any_of(temp.begin(), temp.end(), [](char c) {return !std::isdigit(c); })) {
+                                        throw FormulaError(FormulaError::Category::Value);
+                                    }
+                                    return std::stod(temp);
+                                }
+                            }
                         }
-                    }
+                        }
                     throw FormulaError(std::get<FormulaError>(value));
                 }
             }
@@ -438,7 +480,12 @@ FormulaAST ParseFormulaAST(std::istream& in) {
 
 FormulaAST ParseFormulaAST(const std::string& in_str) {
     std::istringstream in(in_str);
-    return ParseFormulaAST(in);
+    try {
+        return ParseFormulaAST(in);
+    }
+    catch (const std::exception& exc) {
+        throw FormulaException(exc.what());
+    }
 }
 
 void FormulaAST::PrintCells(std::ostream& out) const {
