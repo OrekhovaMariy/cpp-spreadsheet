@@ -291,6 +291,24 @@ namespace {
         std::ostringstream values;
         sheet->PrintValues(values);
         ASSERT_EQUAL(values.str(), "\t\nmeow\t35\n");
+
+        auto sheet1 = CreateSheet();
+        sheet1->SetCell("A2"_pos, "meow");
+        sheet1->SetCell("B2"_pos, "=1+2");
+        sheet1->SetCell("A1"_pos, "=1/0");
+
+        ASSERT_EQUAL(sheet1->GetPrintableSize(), (Size{ 2, 2 }));
+
+        std::ostringstream texts1;
+        sheet1->PrintTexts(texts1);
+        ASSERT_EQUAL(texts1.str(), "=1/0\t\nmeow\t=1+2\n");
+
+        std::ostringstream values1;
+        sheet1->PrintValues(values1);
+        ASSERT_EQUAL(values1.str(), "#DIV/0!\t\nmeow\t3\n");
+
+        sheet1->ClearCell("B2"_pos);
+        ASSERT_EQUAL(sheet1->GetPrintableSize(), (Size{ 2, 1 }));
     }
 
     void TestCellReferences() {
@@ -353,6 +371,20 @@ namespace {
         ASSERT(caught);
         ASSERT_EQUAL(sheet->GetCell("M6"_pos)->GetText(), "Ready");
     }
+
+    void TestCash() {
+        auto sheet = CreateSheet();
+        sheet->SetCell("A2"_pos, "-3.0");
+        sheet->SetCell("A3"_pos, "=1+2*7");
+        sheet->SetCell("C2"_pos, "=A3/A2");
+        ASSERT_EQUAL(sheet->GetCell("C2"_pos)->GetValue(), CellInterface::Value(-5));
+        sheet->SetCell("C4"_pos, "=C2+8");
+        ASSERT_EQUAL(sheet->GetCell("C4"_pos)->GetValue(), CellInterface::Value(3));
+        sheet->SetCell("E3"_pos, "=C4*C2");
+        ASSERT_EQUAL(sheet->GetCell("E3"_pos)->GetValue(), CellInterface::Value(-15));
+        sheet->SetCell("C2"_pos, "=A2");
+        ASSERT_EQUAL(sheet->GetCell("E3"_pos)->GetValue(), CellInterface::Value(-15));
+    }
 }  // namespace
 
 int main() {
@@ -376,5 +408,6 @@ int main() {
     RUN_TEST(tr, TestCellReferences);
     RUN_TEST(tr, TestFormulaIncorrect);
     RUN_TEST(tr, TestCellCircularReferences);
+    RUN_TEST(tr, TestCash);
     return 0;
 }
