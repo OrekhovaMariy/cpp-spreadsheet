@@ -23,9 +23,9 @@ public:
 
     void PrintValues(std::ostream& output) const override;
     void PrintTexts(std::ostream& output) const override;
+
 private:
     std::map<Position, std::unique_ptr<Cell>> pos_cell_;
     Size size_;
     std::set<Position> occupied_cells_;
-
 };
