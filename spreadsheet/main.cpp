@@ -374,16 +374,16 @@ namespace {
 
     void TestCash() {
         auto sheet = CreateSheet();
-        sheet->SetCell("A2"_pos, "-3.0");
-        sheet->SetCell("A3"_pos, "=1+2*7");
+        sheet->SetCell("A2"_pos, "-3.5");
+        sheet->SetCell("A3"_pos, "=2*7");
         sheet->SetCell("C2"_pos, "=A3/A2");
-        ASSERT_EQUAL(sheet->GetCell("C2"_pos)->GetValue(), CellInterface::Value(-5));
+        ASSERT_EQUAL(sheet->GetCell("C2"_pos)->GetValue(), CellInterface::Value(-4.));
         sheet->SetCell("C4"_pos, "=C2+8");
-        ASSERT_EQUAL(sheet->GetCell("C4"_pos)->GetValue(), CellInterface::Value(3));
+        ASSERT_EQUAL(sheet->GetCell("C4"_pos)->GetValue(), CellInterface::Value(4.));
         sheet->SetCell("E3"_pos, "=C4*C2");
-        ASSERT_EQUAL(sheet->GetCell("E3"_pos)->GetValue(), CellInterface::Value(-15));
+        ASSERT_EQUAL(sheet->GetCell("E3"_pos)->GetValue(), CellInterface::Value(-16.));
         sheet->SetCell("C2"_pos, "=A2");
-        ASSERT_EQUAL(sheet->GetCell("E3"_pos)->GetValue(), CellInterface::Value(-15));
+        ASSERT_EQUAL(sheet->GetCell("E3"_pos)->GetValue(), CellInterface::Value(-15.75));
     }
 }  // namespace
 
