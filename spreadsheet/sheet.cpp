@@ -9,8 +9,6 @@
 #include <optional>
 #include <variant>
 
-using namespace std::literals;
-
 Sheet::~Sheet() {}
 
 void Sheet::SetCell(Position pos, const std::string& text) {
@@ -96,9 +94,9 @@ Size Sheet::GetPrintableSize() const {
 }
 
 void Sheet::PrintValues(std::ostream& output) const {
-    for (int i = 0; i != size_.rows; ++i) {
-        for (int j = 0; j != size_.cols; ++j) {
-            Position pos = { i, j };
+    for (int row = 0; row != size_.rows; ++row) {
+        for (int col = 0; col != size_.cols; ++col) {
+            Position pos = { row, col };
             if (pos_cell_.count(pos) != 0) {
                 auto res = pos_cell_.at(pos)->GetValue();
                 if (std::holds_alternative<double>(res)) {
@@ -114,7 +112,7 @@ void Sheet::PrintValues(std::ostream& output) const {
             else {
                 output << "";
             }
-            if (j < size_.cols - 1) {
+            if (col < size_.cols - 1) {
                 output << '\t';
             }
         }
@@ -123,16 +121,16 @@ void Sheet::PrintValues(std::ostream& output) const {
 }
 
 void Sheet::PrintTexts(std::ostream& output) const {
-    for (int i = 0; i != size_.rows; ++i) {
-        for (int j = 0; j != size_.cols; ++j) {
-            Position pos = { i, j };
+    for (int row = 0; row != size_.rows; ++row) {
+        for (int col = 0; col != size_.cols; ++col) {
+            Position pos = { row, col };
             if (pos_cell_.count(pos) != 0) {
                 output << pos_cell_.at(pos)->GetText();
             }
             else {
                 output << "";
             }
-            if (j < size_.cols - 1) {
+            if (col < size_.cols - 1) {
                 output << '\t';
             }
         }
