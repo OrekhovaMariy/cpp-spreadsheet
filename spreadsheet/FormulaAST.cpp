@@ -11,6 +11,8 @@
 #include <sstream>
 #include <algorithm>
 #include <string>
+#include <iomanip>
+#include <charconv>
 
 namespace ASTImpl {
 
@@ -144,24 +146,41 @@ namespace ASTImpl {
                 }
             }
 
+            double DivideOp(const SheetInterface& args) const {
+                double result = 0.0;
+                if (rhs_->Evaluate(args) != 0) {
+                    return result = lhs_->Evaluate(args) / rhs_->Evaluate(args);
+                }
+                else {
+                    throw FormulaError(FormulaError::Category::Div0);
+                }
+            }
+
+            double SubtractOp(const SheetInterface& args) const {
+                return lhs_->Evaluate(args) - rhs_->Evaluate(args);
+            }
+
+            double MultiplyOp(const SheetInterface& args) const {
+                return lhs_->Evaluate(args) * rhs_->Evaluate(args);
+            }
+
+            double AddOp(const SheetInterface& args) const {
+                return lhs_->Evaluate(args) + rhs_->Evaluate(args);
+            }
+
             double Evaluate(const SheetInterface& args) const override {
                 double result = 0.0;
                 if (type_ == Divide) {
-                    if (rhs_->Evaluate(args)!=0) {
-                        result = lhs_->Evaluate(args) / rhs_->Evaluate(args);
-                    }
-                    else {
-                        throw FormulaError(FormulaError::Category::Div0);
-                    }
+                    result = DivideOp(args);
                 }
                 if (type_ == Subtract) {
-                    result = lhs_->Evaluate(args) - rhs_->Evaluate(args);
+                    result = SubtractOp(args);
                 }
                 if (type_ == Multiply) {
-                    result = lhs_->Evaluate(args) * rhs_->Evaluate(args);
+                    result = MultiplyOp(args);
                 }
                 if (type_ == Add) {
-                    result = lhs_->Evaluate(args) + rhs_->Evaluate(args);
+                    result = AddOp(args);
                 }
                 if (std::isfinite(result)) {
                     return result;
@@ -212,9 +231,7 @@ namespace ASTImpl {
                 } else if (type_ == UnaryMinus) {
                     return (-1.0) * operand_->Evaluate(args);
                 }
-                else {
-                    throw FormulaError(FormulaError::Category::Div0);
-                }
+                throw FormulaError(FormulaError::Category::Div0);
             }
 
         private:
@@ -249,72 +266,38 @@ namespace ASTImpl {
                 if (!cell_->IsValid()) {
                     throw FormulaError(FormulaError::Category::Ref);
                 }
-                else {
-                    auto cel = args.GetCell(*cell_);
-                    if (cel == nullptr) {
+                auto cel = args.GetCell(*cell_);
+                if (cel == nullptr) {
+                    return 0;
+                }
+                auto value = cel->GetValue();
+
+                if (std::holds_alternative<double>(value)) {
+                    return std::get<double>(value);
+                }
+
+                if (std::holds_alternative<std::string>(value)) {
+                    std::string value_is_string = std::get<std::string>(value);
+                    if (value_is_string.empty()) {
                         return 0;
                     }
-                    auto value = cel->GetValue();
+                    else {
+                        size_t it = value_is_string.find_first_not_of(' ');
+                        if (it != std::string::npos) {
+                            value_is_string = value_is_string.substr(it);
+                        }
 
-                    if (std::holds_alternative<double>(value)) {
-                        return std::get<double>(value);
-                    }
-
-                    if (std::holds_alternative<std::string>(value)) {
-                        std::string temp = std::get<std::string>(value);
-                        if (temp.empty()) {
-                            return 0;
+                        double result{};
+                        auto [ptr, ec] { std::from_chars(value_is_string.data(), value_is_string.data() + value_is_string.size(), result) };
+                        if (ec == std::errc() && *ptr == '\0') {
+                            return result;
                         }
                         else {
-                            size_t it = temp.find_first_not_of(' ');
-                            if (it != std::string::npos) {
-                                temp = temp.substr(it);
-                            }
-                            if (temp[0] == '-') {
-                                temp = temp.substr(1);
-                                size_t delim = temp.find_first_of('.');
-                                if (delim != std::string::npos) {
-                                    std::string temp1 = temp.substr(0, delim);
-                                    std::string temp2 = temp.substr(delim + 1);
-                                    if (std::any_of(temp1.begin(), temp1.end(), [](char c) {return !std::isdigit(c); })) {
-                                        throw FormulaError(FormulaError::Category::Value);
-                                    }
-                                    if (std::any_of(temp2.begin(), temp2.end(), [](char c) {return !std::isdigit(c); })) {
-                                        throw FormulaError(FormulaError::Category::Value);
-                                    }
-                                    return (- 1.0 * (std::stod(temp)));
-                                }
-                                else {
-                                    if (std::any_of(temp.begin(), temp.end(), [](char c) {return !std::isdigit(c); })) {
-                                        throw FormulaError(FormulaError::Category::Value);
-                                    }
-                                    return (-1.0 * (std::stod(temp)));
-                                }
-                            }
-                            else {
-                                size_t delim = temp.find_first_of('.');
-                                if (delim != std::string::npos) {
-                                    std::string temp1 = temp.substr(0, delim);
-                                    std::string temp2 = temp.substr(delim + 1);
-                                    if (std::any_of(temp1.begin(), temp1.end(), [](char c) {return !std::isdigit(c); })) {
-                                        throw FormulaError(FormulaError::Category::Value);
-                                    }
-                                    if (std::any_of(temp2.begin(), temp2.end(), [](char c) {return !std::isdigit(c); })) {
-                                        throw FormulaError(FormulaError::Category::Value);
-                                    }
-                                    return std::stod(temp);
-                                }
-                                else {
-                                    if (std::any_of(temp.begin(), temp.end(), [](char c) {return !std::isdigit(c); })) {
-                                        throw FormulaError(FormulaError::Category::Value);
-                                    }
-                                    return std::stod(temp);
-                                }
-                            }
+                            throw FormulaError(FormulaError::Category::Value);
                         }
-                        }
-                    throw FormulaError(std::get<FormulaError>(value));
+                    }
                 }
+                throw FormulaError(std::get<FormulaError>(value));
             }
 
         private:
